@@ -1,8 +1,8 @@
 import flask
 import logging
 from xmltodict import parse
-from flask import current_app, request, session
-from urllib.parse import unquote, urlencode, url_for
+from flask import current_app, request, session, url_for
+from urllib.parse import unquote, urlencode
 from .cas_urls import create_cas_login_url, create_url
 from .cas_urls import create_cas_logout_url
 from .cas_urls import create_cas_validate_url
