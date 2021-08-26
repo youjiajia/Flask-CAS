@@ -1,7 +1,9 @@
 import flask
+import logging
 from xmltodict import parse
-from flask import current_app
-from .cas_urls import create_cas_login_url
+from flask import current_app, request, session
+from urllib.parse import unquote, urlencode, url_for
+from .cas_urls import create_cas_login_url, create_url
 from .cas_urls import create_cas_logout_url
 from .cas_urls import create_cas_validate_url
 
@@ -29,6 +31,10 @@ def login():
     the user's attributes are saved under the key
     'CAS_USERNAME_ATTRIBUTE_KEY'
     """
+    next = unquote(request.args.get('next', '/'))
+    after_login = url_for(current_app.config['CAS_AFTER_LOGIN'], external=False)
+    url = create_url(after_login, None, ('next', next))
+    session['CAS_AFTER_LOGIN_SESSION_URL'] = url
 
     cas_token_session_key = current_app.config['CAS_TOKEN_SESSION_KEY']
 
@@ -63,7 +69,7 @@ def logout():
     """
     When the user accesses this route they are logged out.
     """
-
+    next_url = request.args.get('next', '/')
     cas_username_session_key = current_app.config['CAS_USERNAME_SESSION_KEY']
     cas_attributes_session_key = current_app.config['CAS_ATTRIBUTES_SESSION_KEY']
 
@@ -74,10 +80,12 @@ def logout():
         del flask.session[cas_attributes_session_key]
 
     if(current_app.config['CAS_AFTER_LOGOUT'] is not None):
+        after_logout_url = flask.url_for(current_app.config['CAS_AFTER_LOGOUT'], _external=True)
+        after_logout_url = create_url(after_logout_url, None, ('next', next_url))
         redirect_url = create_cas_logout_url(
             current_app.config['CAS_SERVER'],
             current_app.config['CAS_LOGOUT_ROUTE'],
-            current_app.config['CAS_AFTER_LOGOUT'])
+            after_logout_url)
     else:
         redirect_url = create_cas_logout_url(
             current_app.config['CAS_SERVER'],
@@ -138,7 +146,8 @@ def validate(ticket):
                     for index in range(0, len(attributes['cas:memberOf'])):
                         attributes["cas:memberOf"][index] = attributes["cas:memberOf"][index].lstrip('[').rstrip(']').split(',')
                         for group_number in range(0, len(attributes['cas:memberOf'][index])):
-                            attributes['cas:memberOf'][index][group_number] = attributes['cas:memberOf'][index][group_number].lstrip(' ').rstrip(' ')
+                            attributes['cas:memberOf'][index][group_number] = attributes['cas:memberOf'][index][group_number].lstrip(
+                                ' ').rstrip(' ')
 
             flask.session[cas_attributes_session_key] = attributes
     else:
