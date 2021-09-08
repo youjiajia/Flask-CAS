@@ -31,10 +31,11 @@ def login():
     the user's attributes are saved under the key
     'CAS_USERNAME_ATTRIBUTE_KEY'
     """
-    next = unquote(request.args.get('next', '/'))
-    after_login = url_for(current_app.config['CAS_AFTER_LOGIN'], external=False)
-    url = create_url(after_login, None, ('next', next))
-    session['CAS_AFTER_LOGIN_SESSION_URL'] = url
+    if 'ticket' not in flask.request.args:
+        next = unquote(request.args.get('next', '/'))
+        after_login = url_for(current_app.config['CAS_AFTER_LOGIN'], external=False)
+        url = create_url(after_login, None, ('next', next))
+        session['CAS_AFTER_LOGIN_SESSION_URL'] = url
 
     cas_token_session_key = current_app.config['CAS_TOKEN_SESSION_KEY']
 
