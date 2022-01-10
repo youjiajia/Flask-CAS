@@ -43,6 +43,11 @@ def login():
         current_app.config['CAS_SERVER'],
         current_app.config['CAS_LOGIN_ROUTE'],
         flask.url_for('.login', origin=flask.session.get('CAS_AFTER_LOGIN_SESSION_URL'), _external=True))
+    if current_app.config.get('CUSTOM_CAS_LOGIN_URL'):
+        redirect_url = create_cas_login_url(
+            current_app.config['CAS_SERVER'],
+            current_app.config['CAS_LOGIN_ROUTE'],
+            current_app.config.get('CUSTOM_CAS_LOGIN_URL'))
 
     if 'ticket' in flask.request.args:
         flask.session[cas_token_session_key] = flask.request.args['ticket']
